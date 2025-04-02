@@ -1,6 +1,6 @@
 ﻿using System.Text;
 
-Encode("aaa");
+Encode("@");
 
 uint[] GenerateChunk(string input)
 {
