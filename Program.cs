@@ -1,24 +1,27 @@
 ﻿using System.Text;
 
-Encode("@");
+// Encode("aaa");
+
+SHA256Encoder.Encode("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
 
 uint[] GenerateChunk(string input)
 {
     byte[] bytes = Encoding.UTF8.GetBytes(input);
     string resultString = "";
-    int size = 0;
     foreach (var item in bytes)
     {
         resultString += Convert.ToString(item, 2).PadLeft(8, '0');
     }
-    size = resultString.Length;
     resultString += '1';
-    for(int i=0; i<448-size-1; i++)
-    {
-        resultString += '0';
-    }
+    int size = resultString.Length-1;
+    int numberChunks = (size+64)/512 + 1;
+    System.Console.WriteLine(numberChunks);
+    resultString = resultString.PadRight(numberChunks*512 - 64, '0');
+    System.Console.WriteLine(resultString.Length);
     resultString += Convert.ToString(size, 2).PadLeft(64, '0');
-
+    System.Console.WriteLine(resultString.Length);
+    System.Console.WriteLine(resultString);
+    
     uint[] resultMatrix = new uint[16];
 
     for(int i=0; i<16; i++)

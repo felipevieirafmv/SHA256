@@ -3,7 +3,7 @@ using System.Text;
 
 public class SHA256Encoder
 {
-    private static readonly uint[] h =
+    private static uint[] h =
     [
         0b01101010000010011110011001100111,
         0b10111011011001111010111010000101,
@@ -98,22 +98,20 @@ public class SHA256Encoder
     {
         byte[] bytes = Encoding.UTF8.GetBytes(input);
         string resultString = "";
-        int size = 0;
         foreach (var item in bytes)
         {
             resultString += Convert.ToString(item, 2).PadLeft(8, '0');
         }
-        size = resultString.Length;
         resultString += '1';
-        for(int i=0; i<448-size-1; i++)
-        {
-            resultString += '0';
-        }
+        int size = resultString.Length - 1;
+        int numberChunks = (size+64)/512 + 1;
+        resultString = resultString.PadRight(numberChunks*512 - 64, '0');
         resultString += Convert.ToString(size, 2).PadLeft(64, '0');
 
-        uint[] resultMatrix = new uint[16];
+        int linesQuant = resultString.Length/32;
+        uint[] resultMatrix = new uint[linesQuant];
 
-        for(int i=0; i<16; i++)
+        for(int i=0; i<linesQuant; i++)
         {
             string oneByte = resultString.Substring(i*32, 32);
             resultMatrix[i] = Convert.ToUInt32(oneByte, 2);
@@ -147,7 +145,7 @@ public class SHA256Encoder
         return allChunks;
     }
 
-    private static string CalculateResult(uint[] w)
+    private static void CalculateResult(uint[] w)
     {
         uint a = h[0];
         uint b = h[1];
@@ -198,6 +196,18 @@ public class SHA256Encoder
         h[5] += f;
         h[6] += g;
         h[7] += hResult;
+    }
+
+    public static string Encode(string input)
+    {
+        uint[] chunk = GenerateChunk(input);
+
+        for(int i=0; i<chunk.Length; i+=16)
+        {
+            var subArray = new Span<uint>(chunk, i, 16).ToArray();
+            uint[] w = CalculateW(subArray);
+            CalculateResult(w);
+        }
 
         string result = "";
 
@@ -211,14 +221,6 @@ public class SHA256Encoder
         result += h[7].ToString("x");
 
         System.Console.WriteLine(result);
-        return result;
-    }
-
-    public static string Encode(string input)
-    {
-        uint[] chunk = GenerateChunk(input);
-        uint[] w = CalculateW(chunk);
-        string result = CalculateResult(w);
         return result;
     }
 }
