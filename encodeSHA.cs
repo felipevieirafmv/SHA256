@@ -1,7 +1,10 @@
+using System.ComponentModel;
+using System.IO.Pipelines;
+using System.IO;
 using System.Net;
 using System.Text;
 
-public class SHA256Encoder
+public class SHA256Assigner
 {
     private static uint[] h =
     [
@@ -89,14 +92,19 @@ public class SHA256Encoder
         0b11000110011100010111100011110010
     ];
 
-    private static uint RotateRight(uint value, int count)
+    private static uint rotateRight(uint value, int count)
     {
         return (value >> count) | (value << (32 - count));
     }
 
-    private static uint[] GenerateChunk(string input)
+    private static uint[] generateChunk(string input, bool isFile = false)
     {
-        byte[] bytes = Encoding.UTF8.GetBytes(input);
+        byte[] bytes;
+        if(isFile)
+            bytes = File.ReadAllBytes(input);
+        else
+            bytes = Encoding.UTF8.GetBytes(input);
+
         string resultString = "";
         foreach (var item in bytes)
         {
@@ -120,7 +128,7 @@ public class SHA256Encoder
         return resultMatrix;
     }
 
-    private static uint[] CalculateW(uint[] chunk)
+    private static uint[] calculateW(uint[] chunk)
     {
         uint[] allChunks = new uint[64];
         Array.Copy(chunk, allChunks, 16);
@@ -128,14 +136,14 @@ public class SHA256Encoder
         for(int i = 0; i<48; i++)
         {
             uint w1 = allChunks[i+1];
-            uint sigma0temp1 = RotateRight(w1, 7);
-            uint sigma0temp2 = RotateRight(w1, 18);
+            uint sigma0temp1 = rotateRight(w1, 7);
+            uint sigma0temp2 = rotateRight(w1, 18);
             uint sigma0temp3 = w1 >> 3;
             uint sigma0 = sigma0temp1 ^ sigma0temp2 ^ sigma0temp3;
             
             uint w14 = allChunks[i+14];
-            uint sigma1temp1 = RotateRight(w14, 17);
-            uint sigma1temp2 = RotateRight(w14, 19);
+            uint sigma1temp1 = rotateRight(w14, 17);
+            uint sigma1temp2 = rotateRight(w14, 19);
             uint sigma1temp3 = w14 >> 10;
             uint sigma1 = sigma1temp1 ^ sigma1temp2 ^ sigma1temp3;
 
@@ -145,7 +153,7 @@ public class SHA256Encoder
         return allChunks;
     }
 
-    private static void CalculateResult(uint[] w)
+    private static void calculateResult(uint[] w)
     {
         uint a = h[0];
         uint b = h[1];
@@ -160,18 +168,18 @@ public class SHA256Encoder
 
         for(int i=0; i<size; i++)
         {
-            uint sigma1aux1 = RotateRight(e, 6);
-            uint sigma1aux2 = RotateRight(e, 11);
-            uint sigma1aux3 = RotateRight(e, 25);
+            uint sigma1aux1 = rotateRight(e, 6);
+            uint sigma1aux2 = rotateRight(e, 11);
+            uint sigma1aux3 = rotateRight(e, 25);
             uint sigma1 = sigma1aux1 ^ sigma1aux2 ^ sigma1aux3;
 
             uint choice = (e & f) ^ ((~e) & g);
 
             uint temp1 = hResult + sigma1 + choice + k[i] + w[i];
 
-            uint sigma0aux1 = RotateRight(a, 2);
-            uint sigma0aux2 = RotateRight(a, 13);
-            uint sigma0aux3 = RotateRight(a, 22);
+            uint sigma0aux1 = rotateRight(a, 2);
+            uint sigma0aux2 = rotateRight(a, 13);
+            uint sigma0aux3 = rotateRight(a, 22);
             uint sigma0 = sigma0aux1 ^ sigma0aux2 ^ sigma0aux3;
 
             uint majority = (a & b) ^ (a & c) ^ (b & c);
@@ -198,15 +206,15 @@ public class SHA256Encoder
         h[7] += hResult;
     }
 
-    public static string Encode(string input)
+    public static string AssignString(string input)
     {
-        uint[] chunk = GenerateChunk(input);
+        uint[] chunk = generateChunk(input);
 
         for(int i=0; i<chunk.Length; i+=16)
         {
             var subArray = new Span<uint>(chunk, i, 16).ToArray();
-            uint[] w = CalculateW(subArray);
-            CalculateResult(w);
+            uint[] w = calculateW(subArray);
+            calculateResult(w);
         }
 
         string result = "";
@@ -220,7 +228,40 @@ public class SHA256Encoder
         result += h[6].ToString("x");
         result += h[7].ToString("x");
 
-        System.Console.WriteLine(result);
         return result;
+    }
+
+    public static string AssignFile(string path)
+    {
+        uint[] chunk = generateChunk(path, true);
+
+        for(int i=0; i<chunk.Length; i+=16)
+        {
+            var subArray = new Span<uint>(chunk, i, 16).ToArray();
+            uint[] w = calculateW(subArray);
+            calculateResult(w);
+        }
+
+        string result = "";
+
+        result += h[0].ToString("x");
+        result += h[1].ToString("x");
+        result += h[2].ToString("x");
+        result += h[3].ToString("x");
+        result += h[4].ToString("x");
+        result += h[5].ToString("x");
+        result += h[6].ToString("x");
+        result += h[7].ToString("x");
+
+        return result;
+    }
+
+    public static bool Authenticator(string path, string assignature)
+    {
+        string currAssignature = AssignFile(path);
+
+        if(string.Compare(currAssignature, assignature) == 1)
+            return true;
+        return false;
     }
 }
