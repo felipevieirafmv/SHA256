@@ -219,14 +219,14 @@ public class SHA256Assigner
 
         string result = "";
 
-        result += h[0].ToString("x");
-        result += h[1].ToString("x");
-        result += h[2].ToString("x");
-        result += h[3].ToString("x");
-        result += h[4].ToString("x");
-        result += h[5].ToString("x");
-        result += h[6].ToString("x");
-        result += h[7].ToString("x");
+        result += h[0].ToString("x8");
+        result += h[1].ToString("x8");
+        result += h[2].ToString("x8");
+        result += h[3].ToString("x8");
+        result += h[4].ToString("x8");
+        result += h[5].ToString("x8");
+        result += h[6].ToString("x8");
+        result += h[7].ToString("x8");
 
         return result;
     }
@@ -244,14 +244,14 @@ public class SHA256Assigner
 
         string result = "";
 
-        result += h[0].ToString("x");
-        result += h[1].ToString("x");
-        result += h[2].ToString("x");
-        result += h[3].ToString("x");
-        result += h[4].ToString("x");
-        result += h[5].ToString("x");
-        result += h[6].ToString("x");
-        result += h[7].ToString("x");
+        result += h[0].ToString("x8");
+        result += h[1].ToString("x8");
+        result += h[2].ToString("x8");
+        result += h[3].ToString("x8");
+        result += h[4].ToString("x8");
+        result += h[5].ToString("x8");
+        result += h[6].ToString("x8");
+        result += h[7].ToString("x8");
 
         return result;
     }
@@ -259,9 +259,6 @@ public class SHA256Assigner
     public static bool Authenticator(string path, string assignature)
     {
         string currAssignature = AssignFile(path);
-
-        if(string.Compare(currAssignature, assignature) == 1)
-            return true;
-        return false;
+        return currAssignature == assignature;
     }
 }
